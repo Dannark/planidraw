@@ -1,26 +1,33 @@
 import React from 'react';
-import logo from './logo.svg';
+import { Canvas } from '@react-three/fiber';
+import MainScene from './scenes/MainScene';
+import { ConfigProvider, useConfig } from './config/ConfigContext';
 import './App.css';
 
-function App() {
+function AppContent() {
+  const { is3D, setIs3D } = useConfig();
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div className="canvas-container">
+        <Canvas camera={is3D ? { position: [0, 5, 10], fov: 75 } : undefined}>
+          <MainScene />
+        </Canvas>
+      </div>
+      <button
+        className="toggle-button"
+        onClick={() => setIs3D(!is3D)}
+      >
+        {is3D ? 'Modo 2D' : 'Modo 3D'}
+      </button>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <ConfigProvider>
+      <AppContent />
+    </ConfigProvider>
+  );
+}
