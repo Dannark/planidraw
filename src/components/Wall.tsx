@@ -22,6 +22,8 @@ const Wall: React.FC<WallProps> = ({
 
   const { is3D } = useConfig();
 
+  position[1] = height/2; //y
+
   return (
     <mesh position={position} rotation={rotation}>
       <boxGeometry args={[thickness, height, length]} />
