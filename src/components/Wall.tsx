@@ -9,6 +9,7 @@ interface WallProps {
   thickness?: number;
   rotation?: [number, number, number]; // ângulo em radianos
   showEdges?: boolean;
+  selected?: boolean;
   onClick?: (e: any) => void;
 }
 
@@ -19,6 +20,7 @@ const Wall: React.FC<WallProps> = ({
   thickness = 0.15,
   rotation = [0, 0, 0],
   showEdges = true,
+  selected = false,
   onClick,
 }) => {
 
@@ -29,7 +31,7 @@ const Wall: React.FC<WallProps> = ({
   return (
     <mesh position={position} rotation={rotation} onClick={onClick}>
       <boxGeometry args={[thickness, height, length]} />
-      {/* <meshStandardMaterial color="white" wireframe={false} /> */}
+      {selected && <meshStandardMaterial color="yellow" wireframe={false} />}
       {showEdges && !is3D && <Edges color="black" />}
     </mesh>
   );
