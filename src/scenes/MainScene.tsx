@@ -1,5 +1,5 @@
-import React from 'react';
-import { OrthographicCamera } from '@react-three/drei';
+import React, { useRef } from 'react';
+import { OrthographicCamera, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import Wall from '../components/Wall';
 import Controls from '../components/Controls';
 import { useConfig } from '../config/ConfigContext';
@@ -7,6 +7,7 @@ import { useConfig } from '../config/ConfigContext';
 const MainScene: React.FC = () => {
   const { is3D } = useConfig();
   const halfWallThickness = 0.15 / 2;
+  const controlsRef = useRef<any>(null);  
   return (
     <>
       {!is3D && (
@@ -23,7 +24,10 @@ const MainScene: React.FC = () => {
       <pointLight position={[10, 10, 10]} />
       <Wall position={[0, 0, 0]}/>
       <Wall position={[-3-halfWallThickness, 0, -3+halfWallThickness]} rotation={[0, (Math.PI / 2), 0]} />
-      <Controls enableRotate={is3D} enablePan={true} enableZoom={true} />
+      <Controls enableRotate={is3D} enablePan={true} enableZoom={true} controlsRef={controlsRef} />
+      <GizmoHelper alignment="bottom-left" margin={[80, 80]}>
+        <GizmoViewport axisColors={["#ff3653", "#8adb00", "#2c8fff"]} labelColor="white" />
+      </GizmoHelper>
     </>
   );
 };
