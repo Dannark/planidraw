@@ -1,0 +1,3 @@
+/* Estilos específicos para o componente Controls */
+/* Como este é um componente 3D (OrbitControls), a maioria dos estilos são aplicados via props do Three.js */
+/* Este arquivo pode ser usado para futuras customizações de estilo se necessário */ 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './WallConfigPopup.css';
 
 interface WallConfigPopupProps {
   isVisible: boolean;
@@ -72,4 +73,4 @@ const WallConfigPopup: React.FC<WallConfigPopupProps> = ({
   );
 };
 
-export default WallConfigPopup; 
+export default WallConfigPopup;

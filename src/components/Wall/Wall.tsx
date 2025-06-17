@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edges } from '@react-three/drei';
-import { useConfig } from '../config/ConfigContext';
+import { useConfig } from '../../config/ConfigContext';
+import './Wall.css';
 
 interface WallProps {
   position?: [number, number, number];
@@ -37,4 +38,4 @@ const Wall: React.FC<WallProps> = ({
   );
 };
 
-export default Wall;
+export default Wall; 

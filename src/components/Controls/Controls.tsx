@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { OrbitControls } from '@react-three/drei';
+import './Controls.css';
 
 interface ControlsProps {
   enableRotate: boolean;

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import MainScene from './scenes/MainScene';
-import WallConfigPopup from './components/WallConfigPopup';
+import WallConfigPopup from './components/WallConfigPopup/WallConfigPopup';
+import InterfaceControls from './components/InterfaceControls/InterfaceControls';
 import { ConfigProvider, useConfig } from './config/ConfigContext';
 import './App.css';
 
@@ -14,6 +15,12 @@ function AppContent() {
     pendingWallConfig, 
     setPendingWallConfig 
   } = useConfig();
+
+  const handleAddWall = () => {
+    // Armazena a configuração pendente e mostra o popup
+    setPendingWallConfig({ wallIdx: 0, end: 'A', slot: 'forward' });
+    setShowConfigPopup(true);
+  };
 
   const handleConfirmAddWall = (length: number, thickness: number) => {
     // Armazena as configurações no contexto para o MainScene acessar
@@ -42,12 +49,12 @@ function AppContent() {
           <MainScene />
         </Canvas>
       </div>
-      <button
-        className="toggle-button"
-        onClick={() => setIs3D(!is3D)}
-      >
-        {is3D ? 'Modo 2D' : 'Modo 3D'}
-      </button>
+      
+      <InterfaceControls
+        is3D={is3D}
+        onToggle3D={() => setIs3D(!is3D)}
+        onAddWall={handleAddWall}
+      />
       
       {/* Popup de configuração da parede */}
       <WallConfigPopup

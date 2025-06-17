@@ -1,0 +1,39 @@
+/* Estilos para os controles da interface */
+.interface-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.toggle-button,
+.add-wall-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.toggle-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
+}
+
+.add-wall-button {
+  background-color: #2196F3;
+  color: white;
+}
+
+.add-wall-button:hover {
+  background-color: #1976D2;
+} 

@@ -1,30 +1,36 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { OrthographicCamera, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
-import WallWithArrows, { WallData, ConnectionPoint, ConnectionSlot } from '../components/WallWithArrows';
-import Controls from '../components/Controls';
+import Wall from '../components/Wall/Wall';
+import Controls from '../components/Controls/Controls';
 import { useConfig } from '../config/ConfigContext';
 import * as THREE from 'three';
 
-const emptyConnection: ConnectionPoint = { forward: null, right: null, left: null };
-
-const defaultWall: WallData = {
-  position: [0, 0, 0],
-  length: 6,
-  height: 3,
-  thickness: 0.15,
-  rotationY: 0,
-  connectionA: { ...emptyConnection },
-  connectionB: { ...emptyConnection },
-};
+interface SimpleWall {
+  id: string;
+  position: [number, number, number];
+  length: number;
+  height: number;
+  thickness: number;
+  rotationY: number;
+}
 
 const MainScene: React.FC = () => {
   const { is3D } = useConfig();
   const controlsRef = useRef<any>(null);
-  const [walls, setWalls] = useState<WallData[]>([defaultWall]);
-  const [selectedWall, setSelectedWall] = useState<number | null>(0);
+  const [walls, setWalls] = useState<SimpleWall[]>([
+    {
+      id: 'wall-1',
+      position: [0, 0, 0],
+      length: 6,
+      height: 3,
+      thickness: 0.15,
+      rotationY: 0,
+    }
+  ]);
+  const [selectedWall, setSelectedWall] = useState<string | null>('wall-1');
   const { camera, gl } = useThree();
-  
+
   // Estado para o popup de configuração (agora no contexto global)
   const { 
     showConfigPopup, 
@@ -49,92 +55,30 @@ const MainScene: React.FC = () => {
     };
   }, []);
 
-  // Função para adicionar uma nova parede a partir de uma extremidade e direção
-  const handleAddWall = (wallIdx: number, end: 'A' | 'B', slot: ConnectionSlot) => {
+  // Função para adicionar uma nova parede
+  const handleAddWall = () => {
     // Armazena a configuração pendente e mostra o popup
-    setPendingWallConfig({ wallIdx, end, slot });
+    setPendingWallConfig({ wallIdx: 0, end: 'A', slot: 'forward' });
     setShowConfigPopup(true);
   };
 
   // Função para adicionar a parede com as configurações
   const addWallWithConfig = (config: any, length: number, thickness: number) => {
-    const { wallIdx, end, slot } = config;
+    const newWall: SimpleWall = {
+      id: `wall-${Date.now()}`,
+      position: [3, 0, 0], // Posição simples ao lado da primeira parede
+      length: length,
+      height: 3,
+      thickness: thickness,
+      rotationY: 0,
+    };
     
-    setWalls(prevWalls => {
-      const wall = prevWalls[wallIdx];
-      const angle = wall.rotationY ?? 0;
-      // Cálculo do ângulo de rotação (em Y)
-      let newAngle = angle;
-      if (slot === 'right') newAngle += Math.PI / 2;
-      if (slot === 'left') newAngle -= Math.PI / 2;
-      // Ponto de conexão (extremidade)
-      const basePos = end === 'A'
-        ? [
-            wall.position[0] - Math.sin(angle) * ((wall.length ?? 6) / 2),
-            wall.position[1],
-            wall.position[2] - Math.cos(angle) * ((wall.length ?? 6) / 2),
-          ]
-        : [
-            wall.position[0] + Math.sin(angle) * ((wall.length ?? 6) / 2),
-            wall.position[1],
-            wall.position[2] + Math.cos(angle) * ((wall.length ?? 6) / 2),
-          ];
-      // Offset para o centro da nova parede
-      const dx = Math.sin(newAngle) * (length / 2);
-      const dz = Math.cos(newAngle) * (length / 2);
-      const newPos: [number, number, number] = [
-        basePos[0] + dx,
-        basePos[1],
-        basePos[2] + dz,
-      ];
-      // Nova parede
-      const newWall: WallData = {
-        position: newPos,
-        length: length,
-        height: wall.height,
-        thickness: thickness,
-        rotationY: newAngle,
-        connectionA: { ...emptyConnection },
-        connectionB: { ...emptyConnection },
-      };
-      // Atualiza conexões
-      const newWalls = prevWalls.map((w, idx) => {
-        if (idx === wallIdx) {
-          const updated = { ...w };
-          if (end === 'A') updated.connectionA = { ...updated.connectionA, [slot]: prevWalls.length };
-          if (end === 'B') updated.connectionB = { ...updated.connectionB, [slot]: prevWalls.length };
-          return updated;
-        }
-        return w;
-      });
-      // Marca a conexão "de onde veio" na nova parede (tail)
-      let tailEnd: 'A' | 'B';
-      let tailSlot: ConnectionSlot;
-      if (slot === 'forward') {
-        tailEnd = 'A';
-        tailSlot = 'forward';
-      } else if (slot === 'right') {
-        tailEnd = 'A';
-        tailSlot = 'left';
-      } else {
-        tailEnd = 'A';
-        tailSlot = 'right';
-      }
-      if (end === 'B') {
-        tailEnd = tailEnd === 'A' ? 'B' : 'A';
-      }
-      if (tailEnd === 'A') {
-        newWall.connectionA = { ...newWall.connectionA, [tailSlot]: wallIdx };
-      } else {
-        newWall.connectionB = { ...newWall.connectionB, [tailSlot]: wallIdx };
-      }
-      setSelectedWall(newWalls.length); // Seleciona a nova parede
-      return [...newWalls, newWall];
-    });
+    setWalls(prevWalls => [...prevWalls, newWall]);
+    setSelectedWall(newWall.id);
   };
 
-  const handleSelectWall = (index: number) => {
-    setSelectedWall(index);
+  const handleSelectWall = (id: string) => {
+    setSelectedWall(id);
   };
 
   const handleCanvasClick = (event: any) => {
@@ -171,25 +115,29 @@ const MainScene: React.FC = () => {
         position={[0, 0, 0]}
         args={[20, 20]}
         cellSize={1}
-        cellThickness={0.5}
+        cellThickness={1}
         sectionSize={5}
         sectionThickness={1}
         sectionColor={'#717171'}
-        cellColor={'#888'}
+        cellColor={'#f6f6f6'}
         fadeDistance={30}
         fadeStrength={1}
         infiniteGrid={true}
       />
-      {walls.map((wall, idx) => (
-        <WallWithArrows
-          key={idx}
-          {...wall}
-          showArrows={!is3D && selectedWall === idx}
-          selected={selectedWall === idx}
-          onAddWall={(end, slot) => handleAddWall(idx, end, slot)}
-          onSelect={() => handleSelectWall(idx)}
+      
+      {walls.map((wall) => (
+        <Wall
+          key={wall.id}
+          position={wall.position}
+          length={wall.length}
+          height={wall.height}
+          thickness={wall.thickness}
+          rotation={[0, wall.rotationY, 0]}
+          selected={selectedWall === wall.id}
+          onClick={() => handleSelectWall(wall.id)}
         />
       ))}
+      
       <Controls enableRotate={is3D} enablePan={true} enableZoom={true} controlsRef={controlsRef} />
       <GizmoHelper alignment="bottom-left" margin={[80, 80]}>
         <GizmoViewport axisColors={["#ff3653", "#8adb00", "#2c8fff"]} labelColor="white" />
