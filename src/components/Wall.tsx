@@ -29,10 +29,10 @@ const Wall: React.FC<WallProps> = ({
   position[1] = height/2; //y
 
   return (
-    <mesh position={position} rotation={rotation} onClick={onClick}>
+    <mesh position={position} rotation={rotation} onClick={(e) => { e.stopPropagation(); onClick && onClick(e); }}>
       <boxGeometry args={[thickness, height, length]} />
       {selected && <meshStandardMaterial color="yellow" wireframe={false} />}
-      {showEdges && !is3D && <Edges color="black" />}
+      {showEdges && <Edges color="black" />}
     </mesh>
   );
 };

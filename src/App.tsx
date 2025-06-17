@@ -1,11 +1,39 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import MainScene from './scenes/MainScene';
+import WallConfigPopup from './components/WallConfigPopup';
 import { ConfigProvider, useConfig } from './config/ConfigContext';
 import './App.css';
 
 function AppContent() {
-  const { is3D, setIs3D } = useConfig();
+  const { 
+    is3D, 
+    setIs3D, 
+    showConfigPopup, 
+    setShowConfigPopup, 
+    pendingWallConfig, 
+    setPendingWallConfig 
+  } = useConfig();
+
+  const handleConfirmAddWall = (length: number, thickness: number) => {
+    // Armazena as configurações no contexto para o MainScene acessar
+    if (pendingWallConfig) {
+      // Dispara um evento customizado com as configurações
+      const event = new CustomEvent('wallConfigConfirmed', {
+        detail: { length, thickness, config: pendingWallConfig }
+      });
+      window.dispatchEvent(event);
+    }
+    
+    // Fecha o popup
+    setShowConfigPopup(false);
+    setPendingWallConfig(null);
+  };
+
+  const handleCancelAddWall = () => {
+    setShowConfigPopup(false);
+    setPendingWallConfig(null);
+  };
 
   return (
     <div className="App">
@@ -20,6 +48,15 @@ function AppContent() {
       >
         {is3D ? 'Modo 2D' : 'Modo 3D'}
       </button>
+      
+      {/* Popup de configuração da parede */}
+      <WallConfigPopup
+        isVisible={showConfigPopup}
+        onConfirm={handleConfirmAddWall}
+        onCancel={handleCancelAddWall}
+        defaultLength={6}
+        defaultThickness={0.15}
+      />
     </div>
   );
 }

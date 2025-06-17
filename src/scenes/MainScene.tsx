@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { OrthographicCamera, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
+import { useThree } from '@react-three/fiber';
 import WallWithArrows, { WallData, ConnectionPoint, ConnectionSlot } from '../components/WallWithArrows';
 import Controls from '../components/Controls';
 import { useConfig } from '../config/ConfigContext';
@@ -22,12 +23,45 @@ const MainScene: React.FC = () => {
   const controlsRef = useRef<any>(null);
   const [walls, setWalls] = useState<WallData[]>([defaultWall]);
   const [selectedWall, setSelectedWall] = useState<number | null>(0);
+  const { camera, gl } = useThree();
+  
+  // Estado para o popup de configuração (agora no contexto global)
+  const { 
+    showConfigPopup, 
+    setShowConfigPopup, 
+    pendingWallConfig, 
+    setPendingWallConfig 
+  } = useConfig();
+
+  // Effect para escutar mudanças na configuração pendente
+  useEffect(() => {
+    const handleWallConfigConfirmed = (event: CustomEvent) => {
+      const { length, thickness, config } = event.detail;
+      addWallWithConfig(config, length, thickness);
+    };
+
+    // Adiciona o listener para o evento customizado
+    window.addEventListener('wallConfigConfirmed', handleWallConfigConfirmed as EventListener);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('wallConfigConfirmed', handleWallConfigConfirmed as EventListener);
+    };
+  }, []);
 
   // Função para adicionar uma nova parede a partir de uma extremidade e direção
   const handleAddWall = (wallIdx: number, end: 'A' | 'B', slot: ConnectionSlot) => {
+    // Armazena a configuração pendente e mostra o popup
+    setPendingWallConfig({ wallIdx, end, slot });
+    setShowConfigPopup(true);
+  };
+
+  // Função para adicionar a parede com as configurações
+  const addWallWithConfig = (config: any, length: number, thickness: number) => {
+    const { wallIdx, end, slot } = config;
+    
     setWalls(prevWalls => {
       const wall = prevWalls[wallIdx];
-      const length = wall.length ?? 6;
       const angle = wall.rotationY ?? 0;
       // Cálculo do ângulo de rotação (em Y)
       let newAngle = angle;
@@ -36,14 +70,14 @@ const MainScene: React.FC = () => {
       // Ponto de conexão (extremidade)
       const basePos = end === 'A'
         ? [
-            wall.position[0] - Math.sin(angle) * (length / 2),
+            wall.position[0] - Math.sin(angle) * ((wall.length ?? 6) / 2),
             wall.position[1],
-            wall.position[2] - Math.cos(angle) * (length / 2),
+            wall.position[2] - Math.cos(angle) * ((wall.length ?? 6) / 2),
           ]
         : [
-            wall.position[0] + Math.sin(angle) * (length / 2),
+            wall.position[0] + Math.sin(angle) * ((wall.length ?? 6) / 2),
             wall.position[1],
-            wall.position[2] + Math.cos(angle) * (length / 2),
+            wall.position[2] + Math.cos(angle) * ((wall.length ?? 6) / 2),
           ];
       // Offset para o centro da nova parede
       const dx = Math.sin(newAngle) * (length / 2);
@@ -56,9 +90,9 @@ const MainScene: React.FC = () => {
       // Nova parede
       const newWall: WallData = {
         position: newPos,
-        length: wall.length,
+        length: length,
         height: wall.height,
-        thickness: wall.thickness,
+        thickness: thickness,
         rotationY: newAngle,
         connectionA: { ...emptyConnection },
         connectionB: { ...emptyConnection },
@@ -99,9 +133,13 @@ const MainScene: React.FC = () => {
     });
   };
 
-  // Função para selecionar uma parede
   const handleSelectWall = (index: number) => {
     setSelectedWall(index);
+  };
+
+  const handleCanvasClick = (event: any) => {
+    console.log('handleCanvasClick', event);
+    setSelectedWall(null);
   };
 
   return (
@@ -118,6 +156,17 @@ const MainScene: React.FC = () => {
       )}
       <ambientLight intensity={10} />
       <pointLight position={[10, 10, 10]} />
+      
+      {/* Plano invisível para capturar cliques em lugares vazios */}
+      <mesh 
+        position={[0, -1, 0]} 
+        rotation={[-Math.PI / 2, 0, 0]}
+        onClick={handleCanvasClick}
+      >
+        <planeGeometry args={[50, 50]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+      
       <Grid
         position={[0, 0, 0]}
         args={[20, 20]}
