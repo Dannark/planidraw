@@ -13,6 +13,22 @@ interface ImportSceneProps {
   onObjectsUpdate: (objects: Object3DItem[]) => void;
 }
 
+// Função auxiliar para verificar se um objeto contém Mesh
+const hasMesh = (obj: any): boolean => {
+  // Se o próprio objeto é um Mesh, retorna true
+  if (obj.type === 'Mesh') {
+    return true;
+  }
+
+  // Se tem filhos, verifica recursivamente
+  if (obj.children && obj.children.length > 0) {
+    return obj.children.some((child: any) => hasMesh(child));
+  }
+
+  // Se não é Mesh e não tem filhos, retorna false
+  return false;
+};
+
 const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) => {
   const [gltf, setGltf] = useState<any>(null);
   const { is3D } = useConfig();
@@ -25,25 +41,29 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
     if (gltfUrl) {
       const loader = new GLTFLoader();
       loader.load(gltfUrl, (gltf) => {
+        console.log('Arquivo GLTF carregado, filtrando objetos sem mesh...');
+        
+        // Mapeia e filtra os objetos uma única vez após carregar
+        const mapObject = (obj: any): Object3DItem => ({
+          uuid: obj.uuid,
+          type: obj.type,
+          visible: obj.visible !== false,
+          children: obj.children?.map(mapObject) || []
+        });
+
+        // Filtra apenas os objetos que contêm Mesh
+        const filteredObjects = gltf.scene.children
+          .filter(obj => hasMesh(obj))
+          .map(mapObject);
+
+        // Atualiza a lista de objetos filtrada
+        onObjectsUpdate(filteredObjects);
+        
+        // Atualiza o estado com o GLTF
         setGltf(gltf);
       });
     }
   }, [gltfUrl]);
-
-  // Atualiza a lista de objetos quando o GLTF é carregado
-  useEffect(() => {
-    if (gltf && gltf.scene && gltf.scene.children && onObjectsUpdate) {
-      const mapObject = (obj: any): Object3DItem => ({
-        uuid: obj.uuid,
-        type: obj.type,
-        visible: obj.visible !== false,
-        children: obj.children?.map(mapObject) || []
-      });
-
-      const list = gltf.scene.children.map(mapObject);
-      onObjectsUpdate(list);
-    }
-  }, [gltf, onObjectsUpdate]);
 
   // Callback para alternar visibilidade
   useEffect(() => {

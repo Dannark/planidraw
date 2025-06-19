@@ -52,7 +52,7 @@ const ObjectItem: React.FC<ObjectItemProps> = ({
   };
 
   return (
-    <li className="object-list-item" style={{ paddingLeft: `${24}px` }}>
+    <li className="object-list-item" style={{ paddingLeft: `${16}px` }}>
       <div className="object-item-content">
         <input
           type="checkbox"
