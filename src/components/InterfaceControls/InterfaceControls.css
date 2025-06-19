@@ -23,4 +23,34 @@
 
 .toggle-button:hover {
   background-color: #45a049;
+}
+
+.mode-toggle-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #444;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.mode-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  color: #000;
+}
+
+.mode-label {
+  font-weight: 500;
+  user-select: none;
 } 
