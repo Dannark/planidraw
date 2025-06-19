@@ -68,20 +68,30 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     }
   }, [gltfUrl]);
 
-  // Função para encontrar o objeto pai de segundo nível
+  // Função para encontrar o objeto pai apropriado
   const findSecondLevelParent = (object: THREE.Object3D): THREE.Object3D => {
-    let current = object;
-    let depth = 0;
-    let parent = object.parent;
+    const parentList: THREE.Object3D[] = [];
+    let current: THREE.Object3D | null = object;
 
-    // Sobe na hierarquia até encontrar o pai de segundo nível ou a raiz
-    while (parent && parent !== gltf.scene && depth < 3) {
-      current = parent;
-      parent = parent.parent;
-      depth++;
+    // Monta a lista de parents até a raiz (gltf.scene)
+    while (current && current !== gltf.scene) {
+      parentList.push(current);
+      current = current.parent;
     }
 
-    return current;
+    console.log('Lista de parents:', parentList.map(obj => ({ 
+      uuid: obj.uuid, 
+      type: obj.type,
+      name: obj.name
+    })));
+
+    // Se tiver pelo menos 2 itens na lista, retorna o penúltimo
+    // Caso contrário, retorna o próprio objeto
+    if (parentList.length >= 2) {
+      return parentList[parentList.length - 2];
+    }
+
+    return object;
   };
 
   // Função para encontrar o Object3DItem correspondente ao UUID
@@ -132,7 +142,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       console.log('Objeto clicado:', clickedObject);
       console.log('Objeto pai encontrado2:', parentObject);
 
-      onObjectClick(parentObject);
+      onObjectClick(parentObject || clickedObject);
 
       // Dispara o evento de seleção com o objeto pai
       const event = new CustomEvent('selectObject', {
@@ -287,7 +297,8 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
 
           // Foca a câmera no objeto selecionado
           if (camera) {
-            const distance = Math.max(size.x, size.y, size.z) * 2;
+            // const distance = Math.max(size.x, size.y, size.z) * 2;
+            const distance = 10;
             console.log('📷 [ImportScene] Ajustando câmera, distância:', distance);
             
             if (!is3D) {
