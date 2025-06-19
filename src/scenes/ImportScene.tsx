@@ -76,9 +76,18 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
   useEffect(() => {
     const handleSelectObject = (event: CustomEvent) => {
       const { object } = event.detail;
+      console.log('🔍 [ImportScene] Recebido evento de seleção:', {
+        uuid: object.uuid,
+        type: object.type,
+        visible: object.visible
+      });
+      
       if (gltf && gltf.scene) {
+        console.log('📦 [ImportScene] GLTF carregado, procurando objeto...');
+        
         // Remove o highlight anterior
         if (boundingBoxRef.current) {
+          console.log('🗑️ [ImportScene] Removendo highlight anterior');
           gltf.scene.remove(boundingBoxRef.current);
           boundingBoxRef.current = null;
         }
@@ -86,9 +95,10 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
         // Remove o box sólido anterior
         const existingBox = gltf.scene.getObjectByName('selection-box');
         if (existingBox) {
+          console.log('🗑️ [ImportScene] Removendo box anterior');
           gltf.scene.remove(existingBox);
         }
-        
+
         // Encontra o objeto na cena
         const findObject = (obj: any): THREE.Object3D | null => {
           if (obj.uuid === object.uuid) {
@@ -105,12 +115,24 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
 
         const selectedObj = findObject(gltf.scene);
         if (selectedObj) {
+          console.log('✅ [ImportScene] Objeto encontrado na cena:', {
+            uuid: selectedObj.uuid,
+            type: selectedObj.type,
+            position: selectedObj.position,
+            visible: selectedObj.visible
+          });
+          
           selectedObjectRef.current = selectedObj;
           
           // Cria um bounding box para highlight
           const bbox = new THREE.Box3().setFromObject(selectedObj);
           const size = bbox.getSize(new THREE.Vector3());
           const center = bbox.getCenter(new THREE.Vector3());
+          
+          console.log('📏 [ImportScene] Bounding box calculado:', {
+            size: { x: size.x, y: size.y, z: size.z },
+            center: { x: center.x, y: center.y, z: center.z }
+          });
           
           // Cria um wireframe box mais visível
           const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
@@ -132,6 +154,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
           wireframe.renderOrder = 999; // Renderiza por último (por cima)
           gltf.scene.add(wireframe);
           boundingBoxRef.current = wireframe;
+          console.log('🎨 [ImportScene] Wireframe highlight criado');
 
           // Adiciona também um box sólido semi-transparente para mais destaque
           const boxGeometry = new THREE.BoxGeometry(size.x, size.y, size.z);
@@ -147,16 +170,19 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
           boxMesh.name = 'selection-box';
           boxMesh.renderOrder = 998;
           gltf.scene.add(boxMesh);
+          console.log('📦 [ImportScene] Box sólido criado');
 
           // Foca a câmera no objeto selecionado
           if (camera) {
             const distance = Math.max(size.x, size.y, size.z) * 2;
+            console.log('📷 [ImportScene] Ajustando câmera, distância:', distance);
             
             if (!is3D) {
               // Câmera ortográfica: sempre de cima para baixo (eixo Y)
               camera.position.set(center.x, center.y + distance, center.z);
               camera.lookAt(center.x, center.y, center.z);
               camera.up.set(0, 0, -1); // Mantém o eixo Z- para frente
+              console.log('📷 [ImportScene] Câmera ortográfica ajustada');
             } else {
               // Câmera 3D: 45° de inclinação de cima para baixo
               const angle = Math.PI / 4; // 45 graus
@@ -170,15 +196,21 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
               );
               camera.lookAt(center.x, center.y, center.z);
               camera.up.set(0, 1, 0); // Mantém o eixo Z- para frente
+              console.log('📷 [ImportScene] Câmera 3D ajustada');
             }
             
             // Atualiza os controles se disponível
             if (controls && (controls as any).target) {
               (controls as any).target.copy(center);
               (controls as any).update();
+              console.log('🎮 [ImportScene] Controles atualizados');
             }
           }
+        } else {
+          console.warn('❌ [ImportScene] Objeto não encontrado na cena:', object.uuid);
         }
+      } else {
+        console.warn('❌ [ImportScene] GLTF não carregado');
       }
     };
 

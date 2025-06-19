@@ -92,6 +92,8 @@ function AppContent() {
 
   // Callback para selecionar objeto
   const handleSelectObject = (object: Object3DItem) => {
+    console.log('🎯 [App] Objeto selecionado:', object);
+    
     setSelectedObjectUuid(object.uuid);
     // Dispara um evento customizado para o ImportScene
     const event = new CustomEvent('selectObject', { detail: { object } });
