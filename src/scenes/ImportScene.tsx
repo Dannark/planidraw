@@ -10,6 +10,7 @@ import Controls from '../components/Controls/Controls';
 interface ImportSceneProps {
   gltfUrl: string | null;
   onObjectsUpdate: (objects: Object3DItem[]) => void;
+  onObjectClick: (object: Object3DItem) => void;
 }
 
 // Função auxiliar para verificar se um objeto contém Mesh
@@ -28,7 +29,7 @@ const hasMesh = (obj: any): boolean => {
   return false;
 };
 
-const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) => {
+const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onObjectClick }) => {
   const [gltf, setGltf] = useState<any>(null);
   const { is3D } = useConfig();
   const { camera, gl } = useThree();
@@ -74,7 +75,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
     let parent = object.parent;
 
     // Sobe na hierarquia até encontrar o pai de segundo nível ou a raiz
-    while (parent && parent !== gltf.scene && depth < 2) {
+    while (parent && parent !== gltf.scene && depth < 3) {
       current = parent;
       parent = parent.parent;
       depth++;
@@ -129,7 +130,9 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
       const parentObject = findSecondLevelParent(clickedObject);
       
       console.log('Objeto clicado:', clickedObject);
-      console.log('Objeto pai encontrado:', parentObject);
+      console.log('Objeto pai encontrado2:', parentObject);
+
+      onObjectClick(parentObject);
 
       // Dispara o evento de seleção com o objeto pai
       const event = new CustomEvent('selectObject', {

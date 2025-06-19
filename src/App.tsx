@@ -110,6 +110,11 @@ function AppContent() {
     window.dispatchEvent(event);
   };
 
+  const handleObjectClick = (object: Object3DItem) => {
+    console.log('🎯 [App] Objeto clicado2:', object);
+    setSelectedObjectUuid(object.uuid);
+  };
+
   return (
     <div className="App">
       <div className="canvas-container">
@@ -125,6 +130,7 @@ function AppContent() {
             <ImportScene 
               gltfUrl={gltfUrl} 
               onObjectsUpdate={handleObjectsUpdate}
+              onObjectClick={handleObjectClick}
             />
           ) : (
             <MainScene />

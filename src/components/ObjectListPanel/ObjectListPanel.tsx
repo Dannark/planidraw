@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ObjectListPanel.css';
 
 export type Object3DItem = {
@@ -34,6 +34,17 @@ const ObjectItem: React.FC<ObjectItemProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const hasChildren = object.children && object.children.length > 0;
   const isSelected = selectedObjectUuid === object.uuid;
+  const itemRef = useRef<HTMLLIElement>(null);
+
+  // Efeito para fazer scroll quando o item é selecionado
+  useEffect(() => {
+    if (isSelected && itemRef.current) {
+      itemRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }, [isSelected]);
 
   const renderObjectCount = () => {
     if (!hasChildren) return '';
@@ -53,7 +64,7 @@ const ObjectItem: React.FC<ObjectItemProps> = ({
   };
 
   return (
-    <li className="object-list-item" style={{ paddingLeft: `${16}px` }}>
+    <li ref={itemRef} className="object-list-item" style={{ paddingLeft: `${16}px` }}>
       <div className="object-item-content">
         <input
           type="checkbox"
