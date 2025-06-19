@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLoader } from '@react-three/fiber';
+import { useLoader, useThree } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Object3DItem } from '../components/ObjectListPanel/ObjectListPanel';
-import { useThree } from '@react-three/fiber';
 import { useConfig } from '../config/ConfigContext';
 import * as THREE from 'three';
 import { OrthographicCamera, PerspectiveCamera, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
@@ -32,10 +31,12 @@ const hasMesh = (obj: any): boolean => {
 const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) => {
   const [gltf, setGltf] = useState<any>(null);
   const { is3D } = useConfig();
-  const { camera, controls } = useThree();
+  const { camera, gl } = useThree();
   const controlsRef = useRef<any>(null);
   const selectedObjectRef = useRef<THREE.Object3D | null>(null);
   const boundingBoxRef = useRef<THREE.LineSegments | null>(null);
+  const raycaster = useRef(new THREE.Raycaster());
+  const mouse = useRef(new THREE.Vector2());
 
   useEffect(() => {
     if (gltfUrl) {
@@ -44,17 +45,18 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
         console.log('Arquivo GLTF carregado, filtrando objetos sem mesh...');
         
         // Mapeia e filtra os objetos uma única vez após carregar
-        const mapObject = (obj: any): Object3DItem => ({
+        const mapObject = (obj: any, parent: Object3DItem | null = null): Object3DItem => ({
           uuid: obj.uuid,
           type: obj.type,
           visible: obj.visible !== false,
-          children: obj.children?.map(mapObject) || []
+          parent: parent,
+          children: obj.children?.map((child: any) => mapObject(child, obj)) || []
         });
 
         // Filtra apenas os objetos que contêm Mesh
         const filteredObjects = gltf.scene.children
           .filter(obj => hasMesh(obj))
-          .map(mapObject);
+          .map(obj => mapObject(obj, null));
 
         // Atualiza a lista de objetos filtrada
         onObjectsUpdate(filteredObjects);
@@ -64,6 +66,94 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
       });
     }
   }, [gltfUrl]);
+
+  // Função para encontrar o objeto pai de segundo nível
+  const findSecondLevelParent = (object: THREE.Object3D): THREE.Object3D => {
+    let current = object;
+    let depth = 0;
+    let parent = object.parent;
+
+    // Sobe na hierarquia até encontrar o pai de segundo nível ou a raiz
+    while (parent && parent !== gltf.scene && depth < 2) {
+      current = parent;
+      parent = parent.parent;
+      depth++;
+    }
+
+    return current;
+  };
+
+  // Função para encontrar o Object3DItem correspondente ao UUID
+  const findObject3DItem = (uuid: string, objects: Object3DItem[]): Object3DItem | null => {
+    for (const obj of objects) {
+      if (obj.uuid === uuid) return obj;
+      if (obj.children) {
+        const found = findObject3DItem(uuid, obj.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // Handler para cliques na cena
+  const handleSceneClick = (event: MouseEvent) => {
+    if (!gltf || !gltf.scene || !camera) return;
+
+    // Remove highlights anteriores antes de fazer a nova seleção
+    if (boundingBoxRef.current) {
+      gltf.scene.remove(boundingBoxRef.current);
+      boundingBoxRef.current = null;
+    }
+    
+    const existingBox = gltf.scene.getObjectByName('selection-box');
+    if (existingBox) {
+      gltf.scene.remove(existingBox);
+    }
+
+    // Calcula as coordenadas normalizadas do mouse (-1 a 1)
+    const bounds = gl.domElement.getBoundingClientRect();
+    mouse.current.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+    mouse.current.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+
+    // Atualiza o raycaster
+    raycaster.current.setFromCamera(mouse.current, camera);
+
+    // Obtém todos os objetos intersectados
+    const intersects = raycaster.current.intersectObjects(gltf.scene.children, true);
+
+    if (intersects.length > 0) {
+      // Pega o primeiro objeto intersectado
+      const clickedObject = intersects[0].object;
+      
+      // Encontra o pai de segundo nível
+      const parentObject = findSecondLevelParent(clickedObject);
+      
+      console.log('Objeto clicado:', clickedObject);
+      console.log('Objeto pai encontrado:', parentObject);
+
+      // Dispara o evento de seleção com o objeto pai
+      const event = new CustomEvent('selectObject', {
+        detail: { 
+          object: { 
+            uuid: parentObject.uuid,
+            type: parentObject.type,
+            visible: parentObject.visible
+          } 
+        }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
+  // Adiciona o listener de clique
+  useEffect(() => {
+    const canvas = gl.domElement;
+    canvas.addEventListener('click', handleSceneClick);
+    
+    return () => {
+      canvas.removeEventListener('click', handleSceneClick);
+    };
+  }, [gltf, camera, gl]);
 
   // Callback para alternar visibilidade
   useEffect(() => {
@@ -220,9 +310,9 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
             }
             
             // Atualiza os controles se disponível
-            if (controls && (controls as any).target) {
-              (controls as any).target.copy(center);
-              (controls as any).update();
+            if (controlsRef.current) {
+              controlsRef.current.target.copy(center);
+              controlsRef.current.update();
               console.log('🎮 [ImportScene] Controles atualizados');
             }
           }
@@ -238,7 +328,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate }) =
     return () => {
       window.removeEventListener('selectObject', handleSelectObject as any);
     };
-  }, [gltf, camera, controls, is3D]);
+  }, [gltf, camera, controlsRef, is3D]);
 
   // Cleanup do highlight quando a cena muda
   useEffect(() => {

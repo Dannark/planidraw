@@ -94,9 +94,19 @@ function AppContent() {
   const handleSelectObject = (object: Object3DItem) => {
     console.log('🎯 [App] Objeto selecionado:', object);
     
+    // Atualiza a seleção na lista hierárquica
     setSelectedObjectUuid(object.uuid);
+
     // Dispara um evento customizado para o ImportScene
-    const event = new CustomEvent('selectObject', { detail: { object } });
+    const event = new CustomEvent('selectObject', { 
+      detail: { 
+        object: {
+          uuid: object.uuid,
+          type: object.type,
+          visible: object.visible
+        }
+      } 
+    });
     window.dispatchEvent(event);
   };
 

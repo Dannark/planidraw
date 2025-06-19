@@ -5,6 +5,7 @@ export type Object3DItem = {
   uuid: string;
   type: string;
   visible: boolean;
+  parent?: Object3DItem | null;
   children?: Object3DItem[];
 };
 
