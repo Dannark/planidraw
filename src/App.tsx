@@ -26,6 +26,7 @@ function AppContent() {
   
   // Estado para a lista de objetos 3D
   const [objectList, setObjectList] = React.useState<Object3DItem[]>([]);
+  const [selectedObjectUuid, setSelectedObjectUuid] = React.useState<string | null>(null);
 
   const handleConfirmAddWall = (length: number, thickness: number, direction: 'front' | 'back' | 'right' | 'left') => {
     // Armazena as configurações no contexto para o MainScene acessar
@@ -65,14 +66,36 @@ function AppContent() {
   };
 
   // Callback para alternar visibilidade
-  const handleToggleVisibility = (uuid: string, visible: boolean) => {
+  const handleToggleVisibility = (object: Object3DItem) => {
     // Dispara um evento customizado para o ImportScene
-    const event = new CustomEvent('toggleVisibility', { detail: { uuid, visible } });
+    const event = new CustomEvent('toggleVisibility', { detail: { object } });
     window.dispatchEvent(event);
-    // Atualiza o estado local
-    setObjectList(prev => 
-      prev.map(item => item.uuid === uuid ? { ...item, visible } : item)
-    );
+
+    // Atualiza apenas o objeto específico no estado local
+    const updateVisibility = (items: Object3DItem[], targetUuid: string, newVisible: boolean): Object3DItem[] => {
+      return items.map(item => {
+        if (item.uuid === targetUuid) {
+          return { ...item, visible: newVisible };
+        }
+        if (item.children) {
+          return {
+            ...item,
+            children: updateVisibility(item.children, targetUuid, newVisible)
+          };
+        }
+        return item;
+      });
+    };
+
+    setObjectList(prev => updateVisibility(prev, object.uuid, !object.visible));
+  };
+
+  // Callback para selecionar objeto
+  const handleSelectObject = (object: Object3DItem) => {
+    setSelectedObjectUuid(object.uuid);
+    // Dispara um evento customizado para o ImportScene
+    const event = new CustomEvent('selectObject', { detail: { object } });
+    window.dispatchEvent(event);
   };
 
   return (
@@ -90,7 +113,6 @@ function AppContent() {
             <ImportScene 
               gltfUrl={gltfUrl} 
               onObjectsUpdate={handleObjectsUpdate}
-              onToggleVisibility={handleToggleVisibility}
             />
           ) : (
             <MainScene />
@@ -99,7 +121,9 @@ function AppContent() {
         {showImportScene && objectList.length > 0 && (
           <ObjectListPanel 
             objects={objectList} 
-            onToggleVisibility={handleToggleVisibility} 
+            onToggleVisibility={handleToggleVisibility}
+            onSelectObject={handleSelectObject}
+            selectedObjectUuid={selectedObjectUuid || undefined}
           />
         )}
       </div>

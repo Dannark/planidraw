@@ -1,6 +1,6 @@
 .object-list-panel {
   position: absolute;
-  top: 48px; /* Nova altura considerando o menu menor */
+  top: 48px;
   left: 20px;
   z-index: 30;
   background: rgba(255, 255, 255, 0.95);
@@ -8,23 +8,25 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   padding: 8px 0 0 0;
-  min-width: 200px;
-  max-width: 300px;
-  max-height: calc(100vh - 230px); /* Ajustado para a nova altura do menu */
+  min-width: 240px;
+  max-width: 360px;
+  max-height: calc(100vh - 230px);
   display: flex;
   flex-direction: column;
+  color: #333;
 }
 
 .object-list-toggle {
   width: 100%;
   background: none;
   border: none;
-  font-size: 1rem;
-  font-weight: bold;
+  font-size: 12px;
+  font-weight: 500;
   padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   text-align: left;
+  color: #333;
 }
 
 .object-list {
@@ -36,23 +38,80 @@
 }
 
 .object-list-item {
-  display: flex;
-  align-items: center;
-  padding: 6px 12px;
+  font-size: 12px;
+  font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Mono', 'Segoe UI Mono',
+    'Roboto Mono', monospace;
 }
 
-.object-list-item label {
+.object-item-content {
   display: flex;
   align-items: center;
-  width: 100%;
+  padding: 2px 8px;
+  min-height: 22px;
+}
+
+.object-item-content:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.visibility-checkbox {
+  margin: 0 4px;
+  width: 14px;
+  height: 14px;
+}
+
+.expand-button {
+  background: none;
+  border: none;
+  color: rgba(0, 0, 0, 0.6);
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: default;
+  transform: rotate(0deg);
+  transition: transform 0.15s ease;
+  margin: 0 4px;
+}
+
+.expand-button.has-children {
   cursor: pointer;
 }
 
+.expand-button.has-children:hover {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.expand-button.expanded {
+  transform: rotate(90deg);
+}
+
 .object-type {
-  margin-left: 8px;
-  font-family: monospace;
-  color: #333;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 3px;
+  flex-grow: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: background-color 0.15s ease;
+}
+
+.object-type:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.object-type.selected {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.object-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 } 
