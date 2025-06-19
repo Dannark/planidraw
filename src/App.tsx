@@ -16,18 +16,13 @@ function AppContent() {
     setPendingWallConfig 
   } = useConfig();
 
-  const handleAddWall = () => {
-    // Armazena a configuração pendente e mostra o popup
-    setPendingWallConfig({ wallIdx: 0, end: 'A', slot: 'forward' });
-    setShowConfigPopup(true);
-  };
-
-  const handleConfirmAddWall = (length: number, thickness: number) => {
+  const handleConfirmAddWall = (length: number, thickness: number, direction: 'front' | 'back' | 'right' | 'left') => {
     // Armazena as configurações no contexto para o MainScene acessar
     if (pendingWallConfig) {
+      console.log('pendingWallConfig', pendingWallConfig, 'direction', direction);
       // Dispara um evento customizado com as configurações
       const event = new CustomEvent('wallConfigConfirmed', {
-        detail: { length, thickness, config: pendingWallConfig }
+        detail: { length, thickness, direction, config: pendingWallConfig }
       });
       window.dispatchEvent(event);
     }
@@ -53,7 +48,6 @@ function AppContent() {
       <InterfaceControls
         is3D={is3D}
         onToggle3D={() => setIs3D(!is3D)}
-        onAddWall={handleAddWall}
       />
       
       {/* Popup de configuração da parede */}

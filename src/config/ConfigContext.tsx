@@ -4,6 +4,8 @@ interface WallConfig {
   wallIdx: number;
   end: 'A' | 'B';
   slot: 'forward' | 'right' | 'left';
+  position?: [number, number, number];
+  wallId?: string;
 }
 
 interface ConfigContextProps {

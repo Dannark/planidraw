@@ -3,7 +3,7 @@ import './WallConfigPopup.css';
 
 interface WallConfigPopupProps {
   isVisible: boolean;
-  onConfirm: (length: number, thickness: number) => void;
+  onConfirm: (length: number, thickness: number, direction: 'front' | 'back' | 'right' | 'left') => void;
   onCancel: () => void;
   defaultLength?: number;
   defaultThickness?: number;
@@ -18,11 +18,12 @@ const WallConfigPopup: React.FC<WallConfigPopupProps> = ({
 }) => {
   const [length, setLength] = useState(defaultLength);
   const [thickness, setThickness] = useState(defaultThickness);
+  const [direction, setDirection] = useState<'front' | 'back' | 'right' | 'left'>('front');
 
   if (!isVisible) return null;
 
   const handleConfirm = () => {
-    onConfirm(length, thickness);
+    onConfirm(length, thickness, direction);
   };
 
   const handleCancel = () => {
@@ -34,6 +35,15 @@ const WallConfigPopup: React.FC<WallConfigPopupProps> = ({
       <div className="wall-config-popup">
         <h3>Configurar Nova Parede</h3>
         
+        <div className="direction-picker">
+          <button className={direction === 'front' ? 'selected' : ''} onClick={() => setDirection('front')}>↑</button>
+          <div>
+            <button className={direction === 'left' ? 'selected' : ''} onClick={() => setDirection('left')}>←</button>
+            <button className={direction === 'right' ? 'selected' : ''} onClick={() => setDirection('right')}>→</button>
+          </div>
+          <button className={direction === 'back' ? 'selected' : ''} onClick={() => setDirection('back')}>↓</button>
+        </div>
+
         <div className="form-group">
           <label htmlFor="length">Comprimento (metros):</label>
           <input
