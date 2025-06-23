@@ -114,4 +114,29 @@
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.object-list-panel ::-webkit-scrollbar {
+  width: 10px;
+  background: rgba(35, 35, 38, 0.7);
+}
+
+.object-list-panel ::-webkit-scrollbar-thumb {
+  background: #9d4b4b;
+  border-radius: 8px;
+  border: 2px solid rgba(35, 35, 38, 0.98);
+}
+
+.object-list-panel ::-webkit-scrollbar-thumb:hover {
+  background: #e57373;
+}
+
+.object-list-panel ::-webkit-scrollbar-corner {
+  background: rgba(35, 35, 38, 0.98);
+}
+
+/* Firefox */
+.object-list-panel {
+  scrollbar-width: thin;
+  scrollbar-color: #9d4b4b rgba(35, 35, 38, 0.7);
 } 
