@@ -115,6 +115,10 @@ function AppContent() {
     setSelectedObjectUuid(object.uuid);
   };
 
+  const onToggle3D = () => {
+    setIs3D(!is3D);
+  };
+
   return (
     <div className="App">
       <div className="canvas-container">
@@ -125,7 +129,8 @@ function AppContent() {
             isImportScene={showImportScene}
           />
         )}
-        <Canvas camera={is3D ? { position: [0, 5, 10], fov: 75 } : undefined}>
+        <Canvas
+          camera={is3D ? { position: [0, 5, 10], fov: 75 } : undefined}>
           {showImportScene ? (
             <ImportScene 
               gltfUrl={gltfUrl} 
@@ -147,7 +152,7 @@ function AppContent() {
       </div>
       <InterfaceControls
         is3D={is3D}
-        onToggle3D={() => setIs3D(!is3D)}
+        onToggle3D={() => onToggle3D()}
       />
       {/* Popup de configuração da parede */}
       <WallConfigPopup

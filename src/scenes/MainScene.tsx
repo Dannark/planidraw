@@ -181,8 +181,8 @@ const MainScene: React.FC = () => {
         cellThickness={1}
         sectionSize={5}
         sectionThickness={1}
-        sectionColor={'#717171'}
-        cellColor={'#f6f6f6'}
+        sectionColor={'#9d4b4b'}
+        cellColor={'#232326'}
         fadeDistance={30}
         fadeStrength={1}
         infiniteGrid={true}

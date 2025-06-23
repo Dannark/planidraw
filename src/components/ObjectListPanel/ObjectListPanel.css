@@ -3,17 +3,17 @@
   top: 48px;
   left: 20px;
   z-index: 30;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(35, 35, 38, 0.98);
   backdrop-filter: blur(8px);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(157, 75, 75, 0.10);
   padding: 8px 0 0 0;
   min-width: 240px;
   max-width: 360px;
   max-height: calc(100vh - 230px);
   display: flex;
   flex-direction: column;
-  color: #333;
+  color: #f6f6f6;
 }
 
 .object-list-toggle {
@@ -24,9 +24,9 @@
   font-weight: 500;
   padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(157, 75, 75, 0.15);
   text-align: left;
-  color: #333;
+  color: #f6f6f6;
 }
 
 .object-list {
@@ -51,7 +51,7 @@
 }
 
 .object-item-content:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(157, 75, 75, 0.10);
 }
 
 .visibility-checkbox {
@@ -63,7 +63,7 @@
 .expand-button {
   background: none;
   border: none;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(246, 246, 246, 0.6);
   padding: 0;
   width: 16px;
   height: 16px;
@@ -82,7 +82,7 @@
 }
 
 .expand-button.has-children:hover {
-  color: rgba(0, 0, 0, 0.9);
+  color: #e57373;
 }
 
 .expand-button.expanded {
@@ -101,12 +101,12 @@
 }
 
 .object-type:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(157, 75, 75, 0.10);
 }
 
 .object-type.selected {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(157, 75, 75, 0.25);
+  color: #e57373;
   font-weight: 500;
 }
 

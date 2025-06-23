@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useLoader, useThree } from '@react-three/fiber';
+import React, { memo, useEffect, useRef, useState } from 'react';
+import { useLoader, useThree, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Object3DItem } from '../components/ObjectListPanel/ObjectListPanel';
 import { useConfig } from '../config/ConfigContext';
 import * as THREE from 'three';
 import { OrthographicCamera, PerspectiveCamera, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
 import Controls from '../components/Controls/Controls';
+import { useCameraKeyboardNavigation } from '../hooks/useCameraKeyboardNavigation';
 
 interface ImportSceneProps {
   gltfUrl: string | null;
@@ -38,6 +39,50 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
   const boundingBoxRef = useRef<THREE.LineSegments | null>(null);
   const raycaster = useRef(new THREE.Raycaster());
   const mouse = useRef(new THREE.Vector2());
+  const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
+  const isDragging = useRef(false);
+  const [orthoPosition, setOrthoPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 10, 0));
+  const [perspectivePosition, setPerspectivePosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 5, 10));
+  const [cameraPosition, setCameraPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 10, 0));
+
+  // Armazena a última posição e alvo conhecidos da câmera.
+  const lastCameraState = useRef({
+    position: new THREE.Vector3(0, 10, 20),
+    target: new THREE.Vector3(0, 0, 0),
+  });
+
+  // Salva continuamente o estado da câmera em um ref, sem causar re-renderizações.
+  useFrame(() => {
+    if (controlsRef.current) {
+      lastCameraState.current.position.copy(camera.position);
+      lastCameraState.current.target.copy(controlsRef.current.target);
+    }
+  });
+
+  // Efeito para gerenciar a transição suave entre as câmeras 2D e 3D.
+  useEffect(() => {
+    if (is3D) {
+      // Restaura posição, alvo e up do último estado 3D
+      const { position, target } = lastCameraState.current;
+      camera.position.copy(position);
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(target);
+      }
+      camera.up.set(0, 1, 0);
+      if (controlsRef.current) controlsRef.current.update();
+    } else {
+      // Preserva a posição, mas força a orientação para planta baixa
+      const { position, target } = lastCameraState.current;
+      camera.position.copy(position);
+      
+      if (controlsRef.current) {
+        controlsRef.current.target.set(camera.position.x, 0, camera.position.z);
+      }
+      camera.up.set(0, 1, 0);
+      camera.lookAt(camera.position.x, 0, camera.position.z);
+      if (controlsRef.current) controlsRef.current.update();
+    }
+  }, [is3D, camera]);
 
   useEffect(() => {
     if (gltfUrl) {
@@ -106,7 +151,48 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     return null;
   };
 
-  // Handler para cliques na cena
+  // Handler para início do clique
+  const handleMouseDown = (event: MouseEvent) => {
+    mouseDownPos.current = { x: event.clientX, y: event.clientY };
+    isDragging.current = false;
+  };
+
+  // Handler para movimento do mouse
+  const handleMouseMove = (event: MouseEvent) => {
+    if (mouseDownPos.current) {
+      // Verifica se o mouse moveu mais que 3 pixels em qualquer direção
+      const deltaX = Math.abs(event.clientX - mouseDownPos.current.x);
+      const deltaY = Math.abs(event.clientY - mouseDownPos.current.y);
+      if (deltaX > 3 || deltaY > 3) {
+        isDragging.current = true;
+      }
+    }
+  };
+
+  // Handler para fim do clique
+  const handleMouseUp = (event: MouseEvent) => {
+    // Só processa o clique se não houve arrasto
+    if (!isDragging.current && mouseDownPos.current) {
+      handleSceneClick(event);
+    }
+    mouseDownPos.current = null;
+  };
+
+  // Adiciona os listeners de mouse
+  useEffect(() => {
+    const canvas = gl.domElement;
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      canvas.removeEventListener('mousedown', handleMouseDown);
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [gl, gltf, camera]);
+
+  // Remove o antigo listener de clique direto e move a lógica para handleSceneClick
   const handleSceneClick = (event: MouseEvent) => {
     if (!gltf || !gltf.scene || !camera) return;
 
@@ -133,18 +219,10 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     const intersects = raycaster.current.intersectObjects(gltf.scene.children, true);
 
     if (intersects.length > 0) {
-      // Pega o primeiro objeto intersectado
       const clickedObject = intersects[0].object;
-      
-      // Encontra o pai de segundo nível
       const parentObject = findSecondLevelParent(clickedObject);
-      
-      console.log('Objeto clicado:', clickedObject);
-      console.log('Objeto pai encontrado2:', parentObject);
-
       onObjectClick(parentObject || clickedObject);
 
-      // Dispara o evento de seleção com o objeto pai
       const event = new CustomEvent('selectObject', {
         detail: { 
           object: { 
@@ -157,16 +235,6 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       window.dispatchEvent(event);
     }
   };
-
-  // Adiciona o listener de clique
-  useEffect(() => {
-    const canvas = gl.domElement;
-    canvas.addEventListener('click', handleSceneClick);
-    
-    return () => {
-      canvas.removeEventListener('click', handleSceneClick);
-    };
-  }, [gltf, camera, gl]);
 
   // Callback para alternar visibilidade
   useEffect(() => {
@@ -293,7 +361,6 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
           boxMesh.name = 'selection-box';
           boxMesh.renderOrder = 998;
           gltf.scene.add(boxMesh);
-          console.log('📦 [ImportScene] Box sólido criado');
 
           // Foca a câmera no objeto selecionado
           if (camera) {
@@ -304,7 +371,8 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
             if (!is3D) {
               // Câmera ortográfica: sempre de cima para baixo (eixo Y)
               camera.position.set(center.x, center.y + distance, center.z);
-              camera.lookAt(center.x, center.y, center.z);
+
+              // camera.lookAt(center.x, center.y, center.z);
               camera.up.set(0, 0, -1); // Mantém o eixo Z- para frente
               console.log('📷 [ImportScene] Câmera ortográfica ajustada');
             } else {
@@ -318,16 +386,14 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
                 center.y + offsetY,
                 center.z + offsetZ
               );
-              camera.lookAt(center.x, center.y, center.z);
-              camera.up.set(0, 1, 0); // Mantém o eixo Z- para frente
-              console.log('📷 [ImportScene] Câmera 3D ajustada');
+              // camera.lookAt(center.x, center.y, center.z);
+              // camera.up.set(0, 1, 0); // Mantém o eixo Z- para frente
             }
             
             // Atualiza os controles se disponível
             if (controlsRef.current) {
               controlsRef.current.target.copy(center);
               controlsRef.current.update();
-              console.log('🎮 [ImportScene] Controles atualizados');
             }
           }
         } else {
@@ -361,6 +427,16 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     };
   }, [gltf]);
 
+  const moveState = useRef({
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+  });
+
+
+  useCameraKeyboardNavigation(is3D, camera, controlsRef);
+
   if (!gltf) {
     return null;
   }
@@ -370,8 +446,8 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       {!is3D && (
         <OrthographicCamera
           makeDefault
-          position={[0, 10, 0]}
-          up={[0, 0, -1]}
+          // position={cameraPosition}
+          // up={[0, 0, -1]}
           near={1}
           far={1000}
           zoom={100}
@@ -380,29 +456,57 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       {is3D && (
         <PerspectiveCamera
           makeDefault
-          position={[0, 5, 10]}
+          // position={cameraPosition}
           fov={75}
         />
       )}
-      <ambientLight intensity={5} />
-      <pointLight position={[10, 10, 10]} />
+      {/* {!is3D && (
+        <>
+          <ambientLight intensity={3} />
+          <directionalLight
+            position={[30, 10, 30]}
+            intensity={1}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-bias={-0.0001}
+          />
+        </>
+      )} */}
+      {/* <pointLight position={[0, 5, 0]} intensity={10} /> */}
+
+      {true && (
+        <>
+          <ambientLight intensity={1} />
+          <directionalLight
+            position={[30, 10, 30]}
+            intensity={4}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-bias={-0.0001}
+          />
+        </>
+      )}
+      <color attach="background" args={["rgb(48, 48, 53)"]} />
       <Grid
-        position={[0, 0, 0]}
+        position={[0, -0.01, 0]}
         args={[20, 20]}
         cellSize={1}
         cellThickness={1}
         sectionSize={5}
         sectionThickness={1}
-        sectionColor={'#717171'}
-        cellColor={'#f6f6f6'}
+        sectionColor={'#9d4b4b'}
+        cellColor={'#6f6f6f'}
         fadeDistance={30}
         fadeStrength={1}
         infiniteGrid={true}
       />
-      <primitive object={gltf.scene} position={[0, 0, 0]} />
+      <primitive receiveShadow castShadow object={gltf.scene} position={[0, 0, 0]} />
       <Controls enableRotate={is3D} enablePan={true} enableZoom={true} controlsRef={controlsRef} />
+      {/* <Environment preset="city" /> */}
       <GizmoHelper alignment="bottom-left" margin={[80, 80]}>
-        <GizmoViewport axisColors={["#ff3653", "#8adb00", "#2c8fff"]} labelColor="white" />
+        <GizmoViewport axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']} labelColor="white" />
       </GizmoHelper>
     </>
   );

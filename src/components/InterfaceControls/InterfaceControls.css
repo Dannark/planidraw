@@ -29,7 +29,7 @@
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(35, 35, 38, 0.98);
   backdrop-filter: blur(8px);
   border: none;
   border-radius: 8px;
@@ -38,19 +38,20 @@
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  color: #444;
+  color: #e57373;
   font-size: 13px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(157, 75, 75, 0.10);
   transition: all 0.2s ease;
 }
 
 .mode-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  color: #000;
+  background: rgba(157, 75, 75, 0.15);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(157, 75, 75, 0.18);
 }
 
 .mode-label {
   font-weight: 500;
   user-select: none;
+  color: #e57373;
 } 
