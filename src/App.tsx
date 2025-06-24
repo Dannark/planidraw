@@ -92,22 +92,7 @@ function AppContent() {
 
   // Callback para selecionar objeto
   const handleSelectObject = (object: Object3DItem) => {
-    console.log('🎯 [App] Objeto selecionado:', object);
-    
-    // Atualiza a seleção na lista hierárquica
     setSelectedObjectUuid(object.uuid);
-
-    // Dispara um evento customizado para o ImportScene
-    const event = new CustomEvent('selectObject', { 
-      detail: { 
-        object: {
-          uuid: object.uuid,
-          type: object.type,
-          visible: object.visible
-        }
-      } 
-    });
-    window.dispatchEvent(event);
   };
 
   const handleObjectClick = (object: Object3DItem) => {
@@ -136,6 +121,7 @@ function AppContent() {
               gltfUrl={gltfUrl} 
               onObjectsUpdate={handleObjectsUpdate}
               onObjectClick={handleObjectClick}
+              selectedObjectUuid={selectedObjectUuid || undefined}
             />
           ) : (
             <MainScene />
