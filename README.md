@@ -23,7 +23,7 @@ Um visualizador 3D moderno construído com React, Three.js e Firebase, que permi
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/SEU_USERNAME/planidraw.git
+git clone https://github.com/Dannark/planidraw.git
 cd planidraw
 ```
 
@@ -98,8 +98,8 @@ src/
 
 ## 🔗 URLs
 
-- **Aplicação Principal**: `https://SEU_USERNAME.github.io/planidraw`
-- **Visualização Compartilhável**: `https://SEU_USERNAME.github.io/planidraw/viewer/{id}`
+- **Aplicação Principal**: `https://Dannark.github.io/planidraw`
+- **Visualização Compartilhável**: `https://Dannark.github.io/planidraw/viewer/{id}`
 
 ## 🤝 Contribuindo
 
@@ -118,7 +118,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 Se você encontrar algum problema ou tiver dúvidas:
 
 1. Verifique o arquivo [SETUP.md](./SETUP.md) para configurações
-2. Abra uma [issue](https://github.com/SEU_USERNAME/planidraw/issues)
+2. Abra uma [issue](https://github.com/Dannark/planidraw/issues)
 3. Consulte a documentação do [Three.js](https://threejs.org/docs/) e [React Three Fiber](https://docs.pmnd.rs/react-three-fiber/)
 
 ## 🚀 Próximas Funcionalidades
