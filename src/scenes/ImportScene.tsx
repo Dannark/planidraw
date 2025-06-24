@@ -126,13 +126,25 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     raycaster.current.setFromCamera(mouse.current, camera);
     const intersects = raycaster.current.intersectObjects(gltf.scene.children, true);
 
-    if (intersects.length > 0) {
-      const clickedObject = intersects[0].object;
+    // Filtra objetos de highlight
+    const validIntersects = intersects.filter(
+      (i) =>
+        i.object.name !== 'selection-highlight' &&
+        i.object.name !== 'selection-box'
+    );
+
+    if (validIntersects.length > 0) {
+      const clickedObject = validIntersects[0].object;
       const parentObject = findSecondLevelParent(clickedObject, gltf.scene);
       selectObject(parentObject || clickedObject);
+      // Atualize o estado global de seleção aqui, se necessário
+      if (parentObject?.uuid) {
+        onObjectClick({ uuid: parentObject.uuid, type: parentObject.type, visible: parentObject.visible });
+      }
     } else {
-      // Deseleciona se clicar fora
       selectObject(null);
+      // Atualize o estado global de seleção aqui, se necessário
+      // onObjectClick(null);
     }
   };
 
