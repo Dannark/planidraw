@@ -2,7 +2,7 @@
   "name": "planidraw",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://dannark.github.io/planidraw",
+  "homepage": "",
   "dependencies": {
     "@react-three/drei": "^10.3.0",
     "@react-three/fiber": "^9.1.2",
