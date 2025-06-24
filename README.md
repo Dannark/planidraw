@@ -1,46 +1,131 @@
-# Getting Started with Create React App
+# Planidraw - Visualizador 3D Compartilhável
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Um visualizador 3D moderno construído com React, Three.js e Firebase, que permite importar modelos 3D (.glb/.gltf) e compartilhá-los através de links únicos.
 
-## Available Scripts
+## 🚀 Funcionalidades
 
-In the project directory, you can run:
+- **Importação de Modelos 3D**: Suporte para arquivos .glb e .gltf
+- **Visualização 3D/2D**: Alternância entre visualização 3D e planta baixa
+- **Compartilhamento**: Gera links únicos para compartilhar modelos 3D
+- **Interface Moderna**: UI intuitiva com controles de câmera
+- **Lista de Objetos**: Painel lateral com lista de objetos do modelo
+- **Controles de Visibilidade**: Mostrar/ocultar objetos individuais
 
-### `npm start`
+## 🛠️ Tecnologias
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **Frontend**: React 19, TypeScript, Three.js
+- **3D Graphics**: @react-three/fiber, @react-three/drei
+- **Backend**: Firebase (Firestore + Storage)
+- **Roteamento**: React Router DOM
+- **Deploy**: GitHub Pages
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 📦 Instalação
 
-### `npm test`
+1. Clone o repositório:
+```bash
+git clone https://github.com/SEU_USERNAME/planidraw.git
+cd planidraw
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. Instale as dependências:
+```bash
+npm install
+```
 
-### `npm run build`
+3. Configure o Firebase (veja [SETUP.md](./SETUP.md))
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+4. Inicie o servidor de desenvolvimento:
+```bash
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🔧 Configuração
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Firebase Setup
+1. Crie um projeto no [Firebase Console](https://console.firebase.google.com)
+2. Habilite Firestore Database e Storage
+3. Configure as regras de segurança
+4. Atualize a configuração em `src/config/firebase.ts`
 
-### `npm run eject`
+### GitHub Pages
+1. Atualize o `homepage` no `package.json` com seu username
+2. Execute `npm run deploy`
+3. Configure GitHub Pages nas configurações do repositório
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Veja o arquivo [SETUP.md](./SETUP.md) para instruções detalhadas.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📖 Como Usar
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Importando um Modelo
+1. Clique em "Arquivo" > "Importar Modelo 3D"
+2. Selecione um arquivo .glb ou .gltf
+3. O modelo será carregado na cena
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Salvando e Compartilhando
+1. Após importar um modelo, clique em "Arquivo" > "Salvar Cena"
+2. Preencha o nome e descrição (opcional)
+3. Clique em "Salvar Cena"
+4. Copie o link gerado para compartilhar
 
-## Learn More
+### Visualizando um Modelo Compartilhado
+1. Acesse o link compartilhável (ex: `/viewer/{id}`)
+2. O modelo será carregado automaticamente
+3. Use os controles para navegar na cena
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🏗️ Estrutura do Projeto
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+src/
+├── components/
+│   ├── Controls/           # Controles de câmera
+│   ├── InterfaceControls/  # Controles da interface
+│   ├── MainMenu/          # Menu principal
+│   ├── ObjectListPanel/   # Painel de objetos
+│   ├── SaveSceneModal/    # Modal de salvar cena
+│   ├── SharedViewer/      # Visualizador compartilhável
+│   └── Wall/              # Componentes de parede
+├── config/
+│   ├── ConfigContext.tsx  # Contexto de configuração
+│   └── firebase.ts        # Configuração do Firebase
+├── hooks/                 # Hooks customizados
+├── scenes/
+│   ├── ImportScene.tsx    # Cena de importação
+│   └── MainScene.tsx      # Cena principal
+├── services/
+│   └── modelService.ts    # Serviço de modelos
+└── utils/                 # Utilitários
+```
+
+## 🔗 URLs
+
+- **Aplicação Principal**: `https://SEU_USERNAME.github.io/planidraw`
+- **Visualização Compartilhável**: `https://SEU_USERNAME.github.io/planidraw/viewer/{id}`
+
+## 🤝 Contribuindo
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📝 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 🆘 Suporte
+
+Se você encontrar algum problema ou tiver dúvidas:
+
+1. Verifique o arquivo [SETUP.md](./SETUP.md) para configurações
+2. Abra uma [issue](https://github.com/SEU_USERNAME/planidraw/issues)
+3. Consulte a documentação do [Three.js](https://threejs.org/docs/) e [React Three Fiber](https://docs.pmnd.rs/react-three-fiber/)
+
+## 🚀 Próximas Funcionalidades
+
+- [ ] Autenticação de usuários
+- [ ] Galeria de modelos salvos
+- [ ] Anotações em 3D
+- [ ] Exportação de imagens
+- [ ] Colaboração em tempo real
+- [ ] Suporte a mais formatos 3D

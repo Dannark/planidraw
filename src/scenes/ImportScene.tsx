@@ -17,9 +17,10 @@ interface ImportSceneProps {
   onObjectsUpdate: (objects: Object3DItem[]) => void;
   onObjectClick: (object: Object3DItem) => void;
   selectedObjectUuid?: string;
+  onCameraUpdate?: (position: { x: number; y: number; z: number }, target: { x: number; y: number; z: number }) => void;
 }
 
-const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onObjectClick, selectedObjectUuid }) => {
+const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onObjectClick, selectedObjectUuid, onCameraUpdate }) => {
   const { gltf, objectList, isLoading, error } = useObjectImport(gltfUrl);
   const { is3D } = useConfig();
   const { camera, gl } = useThree();
@@ -40,6 +41,22 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     if (controlsRef.current) {
       lastCameraState.current.position.copy(camera.position);
       lastCameraState.current.target.copy(controlsRef.current.target);
+      
+      // Chama o callback para atualizar a posição da câmera no componente pai
+      if (onCameraUpdate) {
+        onCameraUpdate(
+          {
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z
+          },
+          {
+            x: controlsRef.current.target.x,
+            y: controlsRef.current.target.y,
+            z: controlsRef.current.target.z
+          }
+        );
+      }
     }
   });
 
