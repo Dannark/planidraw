@@ -20,6 +20,7 @@ const SaveSceneModal: React.FC<SaveSceneModalProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -40,13 +41,17 @@ const SaveSceneModal: React.FC<SaveSceneModalProps> = ({
       setIsLoading(true);
       setError(null);
       setSuccess(null);
+      setUploadProgress(0);
 
       const sceneConfig = await ModelService.uploadModel(
         currentFile,
         name.trim(),
         description.trim() || undefined,
         cameraPosition,
-        cameraTarget
+        cameraTarget,
+        (progress) => {
+          setUploadProgress(progress);
+        }
       );
 
       const shareUrl = `${window.location.origin}/viewer/${sceneConfig.id}`;
@@ -55,6 +60,7 @@ const SaveSceneModal: React.FC<SaveSceneModalProps> = ({
       // Limpar formulário
       setName('');
       setDescription('');
+      setUploadProgress(0);
       
     } catch (err) {
       console.error('Erro ao salvar cena:', err);
@@ -70,6 +76,7 @@ const SaveSceneModal: React.FC<SaveSceneModalProps> = ({
       setSuccess(null);
       setName('');
       setDescription('');
+      setUploadProgress(0);
       onClose();
     }
   };
@@ -119,6 +126,23 @@ const SaveSceneModal: React.FC<SaveSceneModalProps> = ({
               rows={3}
             />
           </div>
+
+          {isLoading && (
+            <div className="upload-progress">
+              <div className="progress-bar">
+                <div 
+                  className="progress-bar-fill" 
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <div className="progress-text">
+                {uploadProgress < 100 
+                  ? `Fazendo upload: ${Math.round(uploadProgress)}%`
+                  : 'Finalizando...'
+                }
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="error-message">

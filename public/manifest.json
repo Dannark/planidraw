@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Planidraw",
+  "name": "Planidraw - Visualizador 3D Compartilhável",
   "icons": [
     {
       "src": "favicon.ico",

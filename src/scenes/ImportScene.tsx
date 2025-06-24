@@ -44,18 +44,18 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       
       // Chama o callback para atualizar a posição da câmera no componente pai
       if (onCameraUpdate) {
-        onCameraUpdate(
-          {
-            x: camera.position.x,
-            y: camera.position.y,
-            z: camera.position.z
-          },
-          {
-            x: controlsRef.current.target.x,
-            y: controlsRef.current.target.y,
-            z: controlsRef.current.target.z
-          }
-        );
+        const position = {
+          x: camera.position.x,
+          y: camera.position.y,
+          z: camera.position.z
+        };
+        const target = {
+          x: controlsRef.current.target.x,
+          y: controlsRef.current.target.y,
+          z: controlsRef.current.target.z
+        };
+        
+        onCameraUpdate(position, target);
       }
     }
   });
