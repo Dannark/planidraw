@@ -132,8 +132,8 @@ function AppContent() {
                   onToggleScene={() => setShowImportScene((v) => !v)}
                   isImportScene={showImportScene}
                   currentFile={importedFile}
-                  cameraPosition={cameraPositionRef.current}
-                  cameraTarget={cameraTargetRef.current}
+                  cameraPosition={cameraPositionRef}
+                  cameraTarget={cameraTargetRef}
                 />
               )}
               <Canvas

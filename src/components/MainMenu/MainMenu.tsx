@@ -7,8 +7,12 @@ type MainMenuProps = {
   onToggleScene?: () => void;
   isImportScene?: boolean;
   currentFile?: File | null;
-  cameraPosition?: { x: number; y: number; z: number };
-  cameraTarget?: { x: number; y: number; z: number };
+  cameraPosition: React.RefObject<{
+    x: number;
+    y: number;
+    z: number;
+} | undefined>;
+  cameraTarget: React.RefObject<{ x: number; y: number; z: number } | undefined>;
 };
 
 const MainMenu: React.FC<MainMenuProps> = ({ 
@@ -21,8 +25,6 @@ const MainMenu: React.FC<MainMenuProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  const [modalCameraPosition, setModalCameraPosition] = useState<typeof cameraPosition>(undefined);
-  const [modalCameraTarget, setModalCameraTarget] = useState<typeof cameraTarget>(undefined);
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -35,10 +37,9 @@ const MainMenu: React.FC<MainMenuProps> = ({
     }
   };
 
+  console.log('🎯 [MainMenu] cameraPosition:', cameraPosition);
   const handleSaveScene = () => {
-    console.log('🎯 [MainMenu] Salvando cena com câmera:', { cameraPosition, cameraTarget });
-    setModalCameraPosition(cameraPosition);
-    setModalCameraTarget(cameraTarget);
+    console.log('🎯 [MainMenu] Salvando cena com câmera:', { cameraPosition: cameraPosition?.current, cameraTarget: cameraTarget?.current });
     setIsSaveModalOpen(true);
   };
 
@@ -76,8 +77,8 @@ const MainMenu: React.FC<MainMenuProps> = ({
         isOpen={isSaveModalOpen}
         onClose={() => setIsSaveModalOpen(false)}
         currentFile={currentFile || null}
-        cameraPosition={modalCameraPosition}
-        cameraTarget={modalCameraTarget}
+        cameraPosition={cameraPosition?.current}
+        cameraTarget={cameraTarget?.current}
       />
     </>
   );
