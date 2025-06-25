@@ -18,9 +18,10 @@ interface ImportSceneProps {
   onObjectClick: (object: Object3DItem) => void;
   selectedObjectUuid?: string;
   onCameraUpdate?: (position: { x: number; y: number; z: number }, target: { x: number; y: number; z: number }) => void;
+  onVertexCountUpdate?: (count: number | null) => void;
 }
 
-const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onObjectClick, selectedObjectUuid, onCameraUpdate }) => {
+const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onObjectClick, selectedObjectUuid, onCameraUpdate, onVertexCountUpdate }) => {
   const { gltf, objectList, isLoading, error } = useObjectImport(gltfUrl);
   const { is3D } = useConfig();
   const { camera, gl } = useThree();
@@ -134,7 +135,22 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     };
   }, [gl, gltf, camera]);
 
-  // Atualizar handleSceneClick para usar selectObject
+  // Função para calcular o total de vértices de um objeto e seus filhos
+  const calculateTotalVertices = (object: THREE.Object3D): number => {
+    let totalVertices = 0;
+
+    object.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.geometry) {
+        if (child.geometry.attributes.position) {
+          totalVertices += child.geometry.attributes.position.count;
+        }
+      }
+    });
+
+    return totalVertices;
+  };
+
+  // Atualizar handleSceneClick para usar selectObject e calcular vértices
   const handleSceneClick = (event: MouseEvent) => {
     console.log('🎯 [ImportScene] handleSceneClick');
     if (!gltf || !gltf.scene || !camera) return;
@@ -154,15 +170,25 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     if (validIntersects.length > 0) {
       const clickedObject = validIntersects[0].object;
       const parentObject = findSecondLevelParent(clickedObject, gltf.scene);
-      selectObject(parentObject || clickedObject);
+      const selectedObj = parentObject || clickedObject;
+      
+      selectObject(selectedObj);
+      
+      // Calcula e atualiza o total de vértices
+      if (onVertexCountUpdate) {
+        const vertexCount = calculateTotalVertices(selectedObj);
+        onVertexCountUpdate(vertexCount);
+      }
+
       // Atualize o estado global de seleção aqui, se necessário
       if (parentObject?.uuid) {
         onObjectClick({ uuid: parentObject.uuid, type: parentObject.type, visible: parentObject.visible });
       }
     } else {
       selectObject(null);
-      // Atualize o estado global de seleção aqui, se necessário
-      // onObjectClick(null);
+      if (onVertexCountUpdate) {
+        onVertexCountUpdate(null);
+      }
     }
   };
 
@@ -198,6 +224,9 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
   useEffect(() => {
     if (!selectedObjectUuid || !gltf) {
       selectObject(null);
+      if (onVertexCountUpdate) {
+        onVertexCountUpdate(null);
+      }
       return;
     }
     // Busca recursiva pelo UUID no gltf.scene
@@ -213,6 +242,12 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
     };
     const obj = findByUuid(gltf.scene, selectedObjectUuid);
     selectObject(obj);
+    
+    // Atualiza o contador de vértices quando o objeto é selecionado via UUID
+    if (obj && onVertexCountUpdate) {
+      const vertexCount = calculateTotalVertices(obj);
+      onVertexCountUpdate(vertexCount);
+    }
   }, [selectedObjectUuid, gltf]);
 
   if (!gltf) {

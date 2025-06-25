@@ -9,6 +9,7 @@ import InterfaceControls from './components/InterfaceControls/InterfaceControls'
 import { ConfigProvider, useConfig } from './config/ConfigContext';
 import MainMenu from './components/MainMenu/MainMenu';
 import ObjectListPanel, { Object3DItem } from './components/ObjectListPanel/ObjectListPanel';
+import ObjectInfo from './components/ObjectInfo/ObjectInfo';
 import './App.css';
 
 function AppContent() {
@@ -29,6 +30,7 @@ function AppContent() {
   // Estado para a lista de objetos 3D
   const [objectList, setObjectList] = React.useState<Object3DItem[]>([]);
   const [selectedObjectUuid, setSelectedObjectUuid] = React.useState<string | null>(null);
+  const [vertexCount, setVertexCount] = React.useState<number | null>(null);
 
   // Refs para capturar posição da câmera
   const cameraPositionRef = useRef<{ x: number; y: number; z: number } | undefined>(undefined);
@@ -127,14 +129,17 @@ function AppContent() {
           <div className="App">
             <div className="canvas-container">
               {showImportScene && (
-                <MainMenu 
-                  onImport={handleImport} 
-                  onToggleScene={() => setShowImportScene((v) => !v)}
-                  isImportScene={showImportScene}
-                  currentFile={importedFile}
-                  cameraPosition={cameraPositionRef}
-                  cameraTarget={cameraTargetRef}
-                />
+                <>
+                  <MainMenu 
+                    onImport={handleImport} 
+                    onToggleScene={() => setShowImportScene((v) => !v)}
+                    isImportScene={showImportScene}
+                    currentFile={importedFile}
+                    cameraPosition={cameraPositionRef}
+                    cameraTarget={cameraTargetRef}
+                  />
+                  <ObjectInfo vertexCount={vertexCount} />
+                </>
               )}
               <Canvas
                 camera={is3D ? { position: [0, 5, 10], fov: 75 } : undefined}>
@@ -145,6 +150,7 @@ function AppContent() {
                     onObjectClick={handleObjectClick}
                     selectedObjectUuid={selectedObjectUuid || undefined}
                     onCameraUpdate={handleCameraUpdate}
+                    onVertexCountUpdate={setVertexCount}
                   />
                 ) : (
                   <MainScene />
