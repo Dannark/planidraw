@@ -19,11 +19,10 @@ const CameraSetup: React.FC<{ sceneConfig: SceneConfig }> = ({ sceneConfig }) =>
         sceneConfig.cameraPosition.y,
         sceneConfig.cameraPosition.z
       );
-      console.log('🎯 [CameraSetup] camera.position:', camera.position, sceneConfig);
+      // console.log('🎯 [CameraSetup] camera.position:', camera.position, sceneConfig);
     }
     
     if (controls && sceneConfig.cameraTarget) {
-      console.log('🎯 [CameraSetup] sceneConfig.cameraTarget:', sceneConfig.cameraTarget);
       // @ts-ignore - o tipo controls pode não estar definido corretamente
       controls.target.set(
         sceneConfig.cameraTarget.x,
@@ -46,9 +45,14 @@ const SharedViewer: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [objectList, setObjectList] = useState<Object3DItem[]>([]);
   const { is3D, setIs3D } = useConfig();
+  const loadingRef = useRef(false); // Novo ref para controlar o carregamento
 
   useEffect(() => {
     const loadModel = async () => {
+      // Se já estiver carregando, não faz nada
+      if (loadingRef.current) return;
+      
+      console.log('🎯 [SharedViewer] loadModel', id);
       if (!id) {
         setError('ID do modelo não fornecido');
         setIsLoading(false);
@@ -56,6 +60,7 @@ const SharedViewer: React.FC = () => {
       }
 
       try {
+        loadingRef.current = true; // Marca como carregando
         setIsLoading(true);
         setError(null);
 
@@ -70,7 +75,11 @@ const SharedViewer: React.FC = () => {
         setSceneConfig(config);
 
         // Fazer download do modelo
-        const modelArrayBuffer = await ModelService.downloadModel(config.glbUrl);
+        const modelArrayBuffer = await ModelService.downloadModel(
+          config.glbUrl,
+          id,
+          config
+        );
         
         // Converter ArrayBuffer para Blob e criar URL local
         const blob = new Blob([modelArrayBuffer], { type: 'model/gltf-binary' });
@@ -82,6 +91,8 @@ const SharedViewer: React.FC = () => {
         console.error('Erro ao carregar modelo:', err);
         setError('Erro ao carregar o modelo');
         setIsLoading(false);
+      } finally {
+        // loadingRef.current = false; // Marca como não carregando mais
       }
     };
 
@@ -92,6 +103,7 @@ const SharedViewer: React.FC = () => {
       if (localGlbUrl) {
         URL.revokeObjectURL(localGlbUrl);
       }
+      // loadingRef.current = false; // Reseta o flag no cleanup
     };
   }, [id]);
 

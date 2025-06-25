@@ -1,6 +1,7 @@
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../config/firebase';
 import { v4 as uuidv4 } from 'uuid';
+import { cacheService } from './cacheService';
 
 export interface SceneConfig {
   id: string;
@@ -86,6 +87,14 @@ export class ModelService {
   
   static async getModelById(modelId: string): Promise<SceneConfig | null> {
     try {
+      // Tentar buscar do cache primeiro
+      const cachedModel = await cacheService.getCachedModel(modelId);
+      if (cachedModel) {
+        console.log('🎯 Modelo encontrado no cache:', modelId);
+        return cachedModel.sceneConfig;
+      }
+
+      // Se não estiver no cache, buscar do Firebase
       const sceneJsonRef = ref(storage, `models/${modelId}/scene.json`);
       const sceneJsonUrl = await getDownloadURL(sceneJsonRef);
       
@@ -94,20 +103,36 @@ export class ModelService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json() as SceneConfig;
+      const sceneConfig = await response.json() as SceneConfig;
+      return sceneConfig;
     } catch (error) {
       console.error('Erro ao buscar modelo:', error);
       throw error;
     }
   }
   
-  static async downloadModel(glbUrl: string): Promise<ArrayBuffer> {
+  static async downloadModel(glbUrl: string, modelId: string, sceneConfig: SceneConfig): Promise<ArrayBuffer> {
     try {
+      // Verificar cache primeiro
+      const cachedModel = await cacheService.getCachedModel(modelId);
+      if (cachedModel) {
+        console.log('🎯 Dados do modelo encontrados no cache:', modelId);
+        return cachedModel.modelData;
+      }
+
+      // Se não estiver no cache, baixar
+      console.log('🎯 Baixando modelo do Firebase:', modelId);
       const response = await fetch(glbUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return await response.arrayBuffer();
+      const modelData = await response.arrayBuffer();
+
+      // Salvar no cache
+      await cacheService.cacheModel(modelId, sceneConfig, modelData);
+      console.log('🎯 Modelo salvo no cache:', modelId);
+
+      return modelData;
     } catch (error) {
       console.error('Erro ao baixar modelo:', error);
       throw error;
