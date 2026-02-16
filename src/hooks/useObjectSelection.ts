@@ -11,7 +11,6 @@ export function useObjectSelection(camera: THREE.Camera, controlsRef: React.RefO
     selectedObjectRef.current = object;
     if (object && camera) {
       const bbox = new THREE.Box3().setFromObject(object);
-      const size = bbox.getSize(new THREE.Vector3());
       const center = bbox.getCenter(new THREE.Vector3());
       const distance = 10;
       if (!is3D) {

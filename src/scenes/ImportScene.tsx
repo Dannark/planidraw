@@ -1,13 +1,12 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
-import { useLoader, useThree, useFrame } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { useThree, useFrame } from '@react-three/fiber';
 import { Object3DItem } from '../components/ObjectListPanel/ObjectListPanel';
 import { useConfig } from '../config/ConfigContext';
 import * as THREE from 'three';
 import { OrthographicCamera, PerspectiveCamera, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
 import Controls from '../components/Controls/Controls';
 import { useCameraKeyboardNavigation } from '../hooks/useCameraKeyboardNavigation';
-import { hasMesh, findSecondLevelParent, findObject3DItem } from '../utils/objectUtils';
+import { findSecondLevelParent } from '../utils/objectUtils';
 import { useObjectImport } from '../hooks/useObjectImport';
 import { useObjectSelection } from '../hooks/useObjectSelection';
 import { useSelectionHighlight } from '../hooks/useSelectionHighlight';
@@ -22,7 +21,7 @@ interface ImportSceneProps {
 }
 
 const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onObjectClick, selectedObjectUuid, onCameraUpdate, onVertexCountUpdate }) => {
-  const { gltf, objectList, isLoading, error } = useObjectImport(gltfUrl);
+  const { gltf, objectList } = useObjectImport(gltfUrl);
   const { is3D } = useConfig();
   const { camera, gl } = useThree();
   const controlsRef = useRef<any>(null);
@@ -75,7 +74,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       if (controlsRef.current) controlsRef.current.update();
     } else {
       // Preserva a posição, mas força a orientação para planta baixa
-      const { position, target } = lastCameraState.current;
+      const { position } = lastCameraState.current;
       camera.position.copy(position);
       
       if (controlsRef.current) {
@@ -94,17 +93,17 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
   }, [objectList, onObjectsUpdate]);
 
   // Seleção e highlight
-  const { selectedObject, selectObject, selectedObjectRef } = useObjectSelection(camera, controlsRef, is3D);
+  const { selectedObject, selectObject } = useObjectSelection(camera, controlsRef, is3D);
   useSelectionHighlight(selectedObject, gltf);
 
   // Handler para início do clique
-  const handleMouseDown = (event: MouseEvent) => {
+  const handleMouseDown = useCallback((event: MouseEvent) => {
     mouseDownPos.current = { x: event.clientX, y: event.clientY };
     isDragging.current = false;
-  };
+  }, []);
 
   // Handler para movimento do mouse
-  const handleMouseMove = (event: MouseEvent) => {
+  const handleMouseMove = useCallback((event: MouseEvent) => {
     if (mouseDownPos.current) {
       const deltaX = Math.abs(event.clientX - mouseDownPos.current.x);
       const deltaY = Math.abs(event.clientY - mouseDownPos.current.y);
@@ -112,15 +111,16 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
         isDragging.current = true;
       }
     }
-  };
+  }, []);
 
-  // Handler para fim do clique
-  const handleMouseUp = (event: MouseEvent) => {
+  const handleSceneClickRef = useRef<(event: MouseEvent) => void>(() => {});
+
+  const handleMouseUp = useCallback((event: MouseEvent) => {
     if (!isDragging.current && mouseDownPos.current) {
-      handleSceneClick(event);
+      handleSceneClickRef.current(event);
     }
     mouseDownPos.current = null;
-  };
+  }, []);
 
   // Adiciona os listeners de mouse
   useEffect(() => {
@@ -133,7 +133,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [gl, gltf, camera]);
+  }, [gl, handleMouseDown, handleMouseMove, handleMouseUp]);
 
   // Função para calcular o total de vértices de um objeto e seus filhos
   const calculateTotalVertices = (object: THREE.Object3D): number => {
@@ -191,6 +191,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       }
     }
   };
+  handleSceneClickRef.current = handleSceneClick;
 
   // Callback para alternar visibilidade
   useEffect(() => {
@@ -248,7 +249,7 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       const vertexCount = calculateTotalVertices(obj);
       onVertexCountUpdate(vertexCount);
     }
-  }, [selectedObjectUuid, gltf]);
+  }, [selectedObjectUuid, gltf, onVertexCountUpdate, selectObject]);
 
   if (!gltf) {
     return null;

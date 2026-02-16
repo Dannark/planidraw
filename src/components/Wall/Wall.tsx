@@ -1,6 +1,5 @@
 import React from 'react';
 import { Edges } from '@react-three/drei';
-import { useConfig } from '../../config/ConfigContext';
 import * as THREE from 'three';
 import './Wall.css';
 import { ConnectionNode } from '../../types/wall';
@@ -34,9 +33,6 @@ const Wall: React.FC<WallProps> = ({
   nodeA,
   nodeB,
 }) => {
-
-  const { is3D } = useConfig();
-
   position[1] = height/2; //y
 
   // Cálculo das extremidades (A = início, B = fim)

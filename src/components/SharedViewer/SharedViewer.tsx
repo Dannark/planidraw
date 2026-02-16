@@ -43,7 +43,7 @@ const SharedViewer: React.FC = () => {
   const [localGlbUrl, setLocalGlbUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [objectList, setObjectList] = useState<Object3DItem[]>([]);
+  const [, setObjectList] = useState<Object3DItem[]>([]);
   const { is3D, setIs3D } = useConfig();
   const loadingRef = useRef(false); // Novo ref para controlar o carregamento
 
@@ -105,6 +105,7 @@ const SharedViewer: React.FC = () => {
       }
       // loadingRef.current = false; // Reseta o flag no cleanup
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rodar apenas quando id mudar; localGlbUrl é definido dentro do effect
   }, [id]);
 
   const handleObjectsUpdate = (objects: Object3DItem[]) => {

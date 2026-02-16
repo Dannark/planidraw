@@ -1,12 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { OrthographicCamera, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
-import { useThree } from '@react-three/fiber';
 import Wall from '../components/Wall/Wall';
 import Controls from '../components/Controls/Controls';
 import { useConfig } from '../config/ConfigContext';
-import * as THREE from 'three';
 import ConnectionNodeComponent from '../components/Wall/ConnectionNodeComponent';
-import { SimpleWall, ConnectionNode, Slot } from '../types/wall';
+import { SimpleWall, ConnectionNode } from '../types/wall';
 
 const MainScene: React.FC = () => {
   const { is3D } = useConfig();
@@ -21,15 +19,9 @@ const MainScene: React.FC = () => {
     isNode: false,
   }]);
   const [selectedWall, setSelectedWall] = useState<string | null>('wall-1');
-  const { camera, gl } = useThree();
 
   // Estado para o popup de configuração (agora no contexto global)
-  const { 
-    showConfigPopup, 
-    setShowConfigPopup, 
-    pendingWallConfig, 
-    setPendingWallConfig 
-  } = useConfig();
+  const { setShowConfigPopup, setPendingWallConfig } = useConfig();
 
   const wallsRef = useRef(walls);
 
