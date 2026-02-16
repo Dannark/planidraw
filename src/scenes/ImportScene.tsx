@@ -293,11 +293,16 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
           <ambientLight intensity={1} />
           <directionalLight
             position={[30, 10, 30]}
-            intensity={4}
+            intensity={5}
             castShadow
             shadow-mapSize-width={2048}
             shadow-mapSize-height={2048}
             shadow-bias={-0.0001}
+          />
+          {/* Luz de preenchimento em ângulo cruzado: ilumina onde o sol não bate, evita sombras totalmente pretas */}
+          <directionalLight
+            position={[-25, 15, -25]}
+            intensity={0.9}
           />
         </>
       )}
