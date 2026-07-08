@@ -1,15 +1,17 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { Object3DItem } from '../components/ObjectListPanel/ObjectListPanel';
 import { useConfig } from '../config/ConfigContext';
 import * as THREE from 'three';
-import { OrthographicCamera, PerspectiveCamera, GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
+import { OrthographicCamera, PerspectiveCamera, GizmoHelper, GizmoViewport, Grid, Html } from '@react-three/drei';
 import Controls from '../components/Controls/Controls';
 import { useCameraKeyboardNavigation } from '../hooks/useCameraKeyboardNavigation';
 import { findSecondLevelParent } from '../utils/objectUtils';
 import { useObjectImport } from '../hooks/useObjectImport';
 import { useObjectSelection } from '../hooks/useObjectSelection';
 import { useSelectionHighlight } from '../hooks/useSelectionHighlight';
+import packageJson from '../../package.json';
+import './ImportScene.css';
 
 interface ImportSceneProps {
   gltfUrl: string | null;
@@ -29,6 +31,19 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
   const mouse = useRef(new THREE.Vector2());
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
   const isDragging = useRef(false);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  const [maxTextureSize, setMaxTextureSize] = useState<number | null>(null);
+  const [oversizedTextures, setOversizedTextures] = useState<Array<{ name: string; width: number; height: number }>>([]);
+
+  useEffect(() => {
+    const glContext = gl.getContext();
+    console.log(`🎯 [ImportScene] App version: ${packageJson.version}`);
+    console.log('🎯 [ImportScene] WebGL vendor:', glContext.getParameter(glContext.VENDOR));
+    console.log('🎯 [ImportScene] WebGL renderer:', glContext.getParameter(glContext.RENDERER));
+    console.log('🎯 [ImportScene] WebGL version:', glContext.getParameter(glContext.VERSION));
+    console.log('🎯 [ImportScene] GLSL version:', glContext.getParameter(glContext.SHADING_LANGUAGE_VERSION));
+    console.log('🎯 [ImportScene] maxTextureSize:', gl.capabilities.maxTextureSize);
+  }, [gl]);
 
   // Armazena a última posição e alvo conhecidos da câmera.
   const lastCameraState = useRef({
@@ -91,6 +106,62 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       onObjectsUpdate(objectList);
     }
   }, [objectList, onObjectsUpdate]);
+
+  const detectOversizedTextures = useCallback((gltfObject: any, supportedSize: number) => {
+    const textures = new Map<string, { name: string; width: number; height: number }>();
+
+    const addTexture = (texture: any, name: string) => {
+      if (!texture?.image) return;
+      const width = texture.image.width || texture.image.videoWidth;
+      const height = texture.image.height || texture.image.videoHeight;
+      if (!width || !height) return;
+
+      const key = texture.uuid || `${name}-${width}x${height}`;
+      if (width > supportedSize || height > supportedSize) {
+        textures.set(key, { name, width, height });
+      }
+    };
+
+    if (!gltfObject || !gltfObject.scene) return [];
+
+    gltfObject.scene.traverse((child: any) => {
+      if (!child.isMesh) return;
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach((material: any) => {
+        if (!material) return;
+        ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'displacementMap', 'bumpMap'].forEach((key) => {
+          addTexture(material[key], `${material.name || 'material'}:${key}`);
+        });
+      });
+    });
+
+    return Array.from(textures.values());
+  }, []);
+
+  useEffect(() => {
+    if (!gl) return;
+    const glContext = gl.getContext();
+    const maxSize = gl.capabilities?.maxTextureSize || glContext.getParameter(glContext.MAX_TEXTURE_SIZE);
+    setMaxTextureSize(maxSize);
+    console.log('🎯 [ImportScene] WebGL vendor:', glContext.getParameter(glContext.VENDOR));
+    console.log('🎯 [ImportScene] WebGL renderer:', glContext.getParameter(glContext.RENDERER));
+    console.log('🎯 [ImportScene] WebGL version:', glContext.getParameter(glContext.VERSION));
+    console.log('🎯 [ImportScene] GLSL version:', glContext.getParameter(glContext.SHADING_LANGUAGE_VERSION));
+    console.log('🎯 [ImportScene] maxTextureSize:', maxSize);
+  }, [gl]);
+
+  useEffect(() => {
+    if (!gltf || maxTextureSize === null) return;
+    const oversized = detectOversizedTextures(gltf, maxTextureSize);
+    setOversizedTextures(oversized);
+    if (oversized.length > 0) {
+      setWarningMessage(
+        `Este modelo usa texturas maiores do que o máximo suportado pela GPU (${maxTextureSize}×${maxTextureSize}). Isso pode causar falha em alguns navegadores/GPUs, principalmente no Windows.`
+      );
+    } else {
+      setWarningMessage(null);
+    }
+  }, [gltf, maxTextureSize, detectOversizedTextures]);
 
   // Seleção e highlight
   const { selectedObject, selectObject } = useObjectSelection(camera, controlsRef, is3D);
@@ -323,6 +394,29 @@ const ImportScene: React.FC<ImportSceneProps> = ({ gltfUrl, onObjectsUpdate, onO
       />
       <primitive receiveShadow castShadow object={gltf.scene} position={[0, 0, 0]} />
       <Controls enableRotate={is3D} enablePan={true} enableZoom={true} controlsRef={controlsRef} />
+      {warningMessage && (
+        <Html fullscreen>
+          <div className="import-scene-warning-overlay">
+            <div className="import-scene-warning-box">
+              <strong>Aviso de compatibilidade:</strong>
+              <p>{warningMessage}</p>
+              {oversizedTextures.length > 0 && (
+                <div className="import-scene-warning-details">
+                  <p>Texturas grandes detectadas:</p>
+                  <ul>
+                    {oversizedTextures.map((texture, index) => (
+                      <li key={index}>
+                        {texture.name}: {texture.width}×{texture.height}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p>Recomenda-se reexportar o GLB com texturas no máximo {maxTextureSize}×{maxTextureSize}.</p>
+            </div>
+          </div>
+        </Html>
+      )}
       {/* <Environment preset="city" /> */}
       <GizmoHelper alignment="bottom-left" margin={[80, 80]}>
         <GizmoViewport axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']} labelColor="white" />
